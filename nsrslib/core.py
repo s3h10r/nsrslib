@@ -79,12 +79,12 @@ def _execCmd(sCmd,env={}):
 
 ### --- END helpers
 
-def init_settings(NEW_NSR_SERVER=None):
+def init_settings(NSR_SERVER=None):
     """
     TODO
     possibility to use settings different from those in `settings.py`
     """
-    settings.NSR_SERVER = NEW_NSR_SERVER
+    settings.NSR_SERVER = NSR_SERVER
 def bla(): #tmp while develop init_settings
     print settings.NSR_SERVER
 

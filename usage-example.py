@@ -9,13 +9,15 @@ import nsrslib.settings as settings
 
 print settings.NSR_SERVER
 
-nsrs.bla()
+print nsrs.get_version()
 
-# dyn.  overwrite NSR_SERVER setting?
+nsrs.bla() # using pre-defined settings
+
+# dyn. overwrite settings 
 # without changing func-signature (no param)?
 # kwargs?
 
-nsrs.init_settings(NEW_NSR_SERVER="zaphod")
+nsrs.init_settings(NSR_SERVER="zaphod")
 nsrs.bla()
 
 nsrs.get_clients()
