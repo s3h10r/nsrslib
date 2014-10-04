@@ -26,6 +26,14 @@ import logging
 
 import settings 
 
+# --- QP1: oh damned missing py foo... ?are those (as thought) references now?
+# what happens if (accidently) changed later here, like
+#     NSR_SERVER="bla" after calling init_settings() / setup()
+NSR_SERVER = settings.NSR_SERVER
+BIN_MMINFO = settings.BIN_MMINFO
+BIN_NSTADMIN = settings.BIN_NSRADMIN
+# ---
+
 LOGFILE = "/tmp/bla"
 
 logging.basicConfig(
@@ -74,8 +82,10 @@ def init_settings(NSR_SERVER=None):
     """
     TODO
     possibility to use settings different from those in `settings.py`
+    rename2: setup()
     """
     settings.NSR_SERVER = NSR_SERVER
+
 def bla(): #tmp while develop init_settings
     print settings.NSR_SERVER
 
