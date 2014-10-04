@@ -24,6 +24,8 @@ import string # template...
 import datetime
 import logging
 
+import settings 
+
 LOGFILE = "/tmp/bla"
 
 logging.basicConfig(
@@ -43,9 +45,6 @@ BIN_NSRADMIN="/usr/sbin/nsradmin"
 #BIN_NSRADMIN="/opt/nsr/nsradmin"
 
 
-NSR_SERVER="localhost"
-
-
 __author__="sven.hessenmueller@gmail.com"
 __version__="0.0.84"
 __date__= "20110204"
@@ -53,7 +52,7 @@ __copyright__ = "Copyright (c) 2009-11 %s" % __author__
 __license__ = "GPL"
 
 
-### some nsr-independent helpers
+### --- some nsr-independent helpers
 # using _-prefix for not showing in pydoc
 
 def _execCmd(sCmd,env={}): 
@@ -78,9 +77,19 @@ def _execCmd(sCmd,env={}):
 
     return rc, output
 
-### END helpers
+### --- END helpers
 
-def doNSRAdmin(cmd=None):
+def init_settings(NEW_NSR_SERVER=None):
+    """
+    TODO
+    possibility to use settings different from those in `settings.py`
+    """
+    settings.NSR_SERVER = NEW_NSR_SERVER
+def bla(): #tmp while develop init_settings
+    print settings.NSR_SERVER
+
+
+def do_nsradmin(cmd=None):
     """
     sends raw command-string to nsradmin
     returns stdoutput of nsradmin as list
@@ -102,7 +111,7 @@ def doNSRAdmin(cmd=None):
     return res
 
     
-def getClients():
+def get_clients():
     """
     returns dict['client'] = {'group':list_of_save_sets'}
     """
@@ -155,10 +164,6 @@ def getClients():
  
     return dictClients
 
-def getClientsCSV():
-    """
-    returns string in csv format: client; group; sset(s)\n...
-    """
 
     r = getClients()
     lstClients = []
@@ -169,7 +174,8 @@ def getClientsCSV():
 
     return "\n".join(lstClients)
 
-def getPools(bolIgnoreEmptyPools = True):
+
+def get_pools(bolIgnoreEmptyPools = True):
     """
     infos about defined networker pools (how much tapes are inside? how much are free? etc.)
 
@@ -229,6 +235,22 @@ def getPools(bolIgnoreEmptyPools = True):
     logger.debug("FIXME: dctPools = %s" % dctPools)
  
     return dctPools
+
+
+def getClientsCSV():
+    """
+    returns string in csv format: client; group; sset(s)\n...
+    """
+
+    r = getClients()
+    lstClients = []
+
+    for c in sorted(r.iterkeys()):
+        for g in sorted (r[c].iterkeys()):
+            lstClients.append("%s;%s;%s" % (c,g,r[c][g]))
+
+    return "\n".join(lstClients)
+
 
 def getPoolsCSV(pools = None, bolIgnoreEmptyPools = True, sTimeFmt="%Y-%m-%d %H:%M:%S"):
     """
