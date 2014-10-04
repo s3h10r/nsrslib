@@ -36,15 +36,6 @@ logging.basicConfig(
 
 logger = logging.getLogger("nsrslib")
 
-### binaries
-# linux client
-BIN_MMINFO="/usr/sbin/mminfo"
-BIN_NSRADMIN="/usr/sbin/nsradmin"
-# solaris server 
-#BIN_MMINFO="/opt/nsr/mminfo"
-#BIN_NSRADMIN="/opt/nsr/nsradmin"
-
-
 __author__="sven.hessenmueller@gmail.com"
 __version__="0.0.84"
 __date__= "20110204"
