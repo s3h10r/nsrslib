@@ -1,2 +1,5 @@
 quickndirty refactoring & packaging of 
 nsrslib - simple networker scripting helpers
+
+[ ] get_clients_json
+

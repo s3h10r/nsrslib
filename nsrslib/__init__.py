@@ -10,8 +10,6 @@
 __version__="0.0.9"
 
 from core import get_clients, get_pools
-from core import init_settings 
-from core import bla
 
 def get_version():
     return __version__

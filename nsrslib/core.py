@@ -6,8 +6,8 @@ nsr script library core functions
 some simple funcs for doing nsradmin stuff via python
 by wrapping calls to the nsradmin / mminfo command. 
 
-could be used on networker server or on a host where the networker-client
-is installed.
+could be used on a networker server or on any host where the
+networker client-software is installed.
 
 to check if basic commands are working on your machine try:
 
@@ -16,7 +16,6 @@ to check if basic commands are working on your machine try:
 USE AT YOUR OWN RISK! NO WARRENTY! FOR NOTHING!
 
 Copyright (C) 2009-11 Sven Hessenmüller <sven.hessenmueller@gmail.com>
-
 """
 
 import sys, subprocess
@@ -26,23 +25,15 @@ import logging
 
 import settings 
 
-# --- QP1: oh damned missing py foo... ?are those (as thought) references now?
-# what happens if (accidently) changed later here, like
-#     NSR_SERVER="bla" after calling init_settings() / setup()
-NSR_SERVER = settings.NSR_SERVER
-BIN_MMINFO = settings.BIN_MMINFO
-BIN_NSTADMIN = settings.BIN_NSRADMIN
-# ---
-
 LOGFILE = "/tmp/bla"
-
 logging.basicConfig(
-#    filename=LOGFILE,
-#    level=logging.DEBUG,
-    level=logging.INFO,
-    format= "%(asctime)s [%(levelname)-8s] %(message)s" )
+#    filename=LOGFILE",
+#    level = logging.DEBUG,
+    level = logging.INFO,
+    format = '%(asctime)s %(levelname)s %(pathname)s %(message)s' )
 
-logger = logging.getLogger("nsrslib")
+
+logger = logging.getLogger(__name__)
 
 __author__="sven.hessenmueller@gmail.com"
 __version__="0.0.84"
@@ -65,7 +56,6 @@ def _execCmd(sCmd,env={}):
 
     p = sub.Popen([sCmd], shell=True, stdout=sub.PIPE, stderr=sub.STDOUT, env=env)
 
-    #output = p.stdout.read()
     output = p.stdout.readlines()
     p.wait()
     rc = p.returncode
@@ -78,27 +68,18 @@ def _execCmd(sCmd,env={}):
 
 ### --- END helpers
 
-def init_settings(NSR_SERVER=None):
-    """
-    TODO
-    possibility to use settings different from those in `settings.py`
-    rename2: setup()
-    """
-    settings.NSR_SERVER = NSR_SERVER
 
-def bla(): #tmp while develop init_settings
-    print settings.NSR_SERVER
-
-
-def do_nsradmin(cmd=None):
+def do_nsradmin(cmd=None, nsr_server=settings.NSR_SERVER):
     """
     sends raw command-string to nsradmin
-    returns stdoutput of nsradmin as list
+
+    returns
+        stdoutput of nsradmin as list
     """
 
     templ_cmd = string.Template('echo -e \'$cmd\' | $NSRADMIN -s $SERVER -i -')
-    ncmd = templ_cmd.substitute({'cmd':cmd, 'NSRADMIN': BIN_NSRADMIN, 'SERVER' : NSR_SERVER}) 
- 
+    ncmd = templ_cmd.substitute({'cmd':cmd, 'NSRADMIN': settings.BIN_NSRADMIN, 'SERVER' : nsr_server}) 
+
     logger.debug(ncmd)
 
     # using executable=/bin/bash 'cauz `echo -e` doesn't work on /bin/sh under solaris10
@@ -107,21 +88,18 @@ def do_nsradmin(cmd=None):
     res = p.stdout.readlines()
     rc = p.wait()
     if rc != 0:
+        logger.critical("exec of cmd for nasradmin failed! rc %d" % rc)
         raise Exception, "exec of cmd for nsradmin failed! rc %d" % rc
-        logger.critical("exec of cmd for nsradmin failed! rc %d" % rc)
     return res
 
     
-def get_clients():
+def get_clients(nsr_server=settings.NSR_SERVER):
     """
-    returns dict['client'] = {'group':list_of_save_sets'}
-    """
-
-    """
-    FIXME: list of savesets is crappy
+    returns
+        dict['client'] = {'group':list_of_save_sets'}
     """
 
-    res = doNSRAdmin('. type: NSR client\nshow name\nshow group\nshow save set\nprint\n')
+    res = do_nsradmin('. type: NSR client\nshow name\nshow group\nshow save set\nprint\n', nsr_server=nsr_server)
 
     for l in res:
         logger.debug(l.strip())
@@ -166,17 +144,7 @@ def get_clients():
     return dictClients
 
 
-    r = getClients()
-    lstClients = []
-
-    for c in sorted(r.iterkeys()):
-        for g in sorted (r[c].iterkeys()):
-            lstClients.append("%s;%s;%s" % (c,g,r[c][g]))
-
-    return "\n".join(lstClients)
-
-
-def get_pools(bolIgnoreEmptyPools = True):
+def get_pools(ignore_empty_pools = True, nsr_server=settings.NSR_SERVER):
     """
     infos about defined networker pools (how much tapes are inside? how much are free? etc.)
 
@@ -184,7 +152,8 @@ def get_pools(bolIgnoreEmptyPools = True):
     """
     dctPools = {}
 
-    res = doNSRAdmin('. type:NSR pool\nshow name\nprint\n')
+    res = do_nsradmin('. type:NSR pool\nshow name\nprint\n', nsr_server=nsr_server)
+
     for line in res:
         if line.find('name:') >= 0:
             curPool = line.split(":")[1].strip().rstrip(';')
@@ -197,14 +166,12 @@ def get_pools(bolIgnoreEmptyPools = True):
         'templ_lastVol' : string.Template('$MMINFO -s $SERVER -v -q pool="$POOL" -r volume 2>/dev/null | tail -1'),
    
         'templ_cntVolFree' : string.Template('$MMINFO -s $SERVER -v -m -q pool="$POOL" 2>/dev/null | grep -i "undef" | wc -l | tr -d " "'),
-        #'templ_cntVolExpired' : string.Template('$MMINFO -s $SERVER -v -q pool="$POOL",volrecycle,location=Centric,!manual -r volume 2>/dev/null | wc -l | tr -d " "')
         'templ_cntVolExpired' : string.Template('$MMINFO -s $SERVER -v -q pool="$POOL",volrecycle,!manual -r volume 2>/dev/null | wc -l | tr -d " "')
     }
 
     for pool in dctPools:
         for templ in dctCmds:
             cmd = dctCmds[templ].substitute({'MMINFO': BIN_MMINFO, 'SERVER': NSR_SERVER, 'POOL':pool})
-            #print >> sys.stderr, "-debug: ", cmd
 
             # using executable=/bin/bash 
             p = subprocess.Popen(cmd, shell=True, executable="/bin/bash", stdout = subprocess.PIPE)
@@ -238,61 +205,12 @@ def get_pools(bolIgnoreEmptyPools = True):
     return dctPools
 
 
-def getClientsCSV():
+def get_pool_datavol_in_timeslot(pool="POOL1",ts_begin = None, ts_end = None, nsr_server=settings.NSR_SERVER):
     """
-    returns string in csv format: client; group; sset(s)\n...
-    """
-
-    r = getClients()
-    lstClients = []
-
-    for c in sorted(r.iterkeys()):
-        for g in sorted (r[c].iterkeys()):
-            lstClients.append("%s;%s;%s" % (c,g,r[c][g]))
-
-    return "\n".join(lstClients)
-
-
-def getPoolsCSV(pools = None, bolIgnoreEmptyPools = True, sTimeFmt="%Y-%m-%d %H:%M:%S"):
-    """
-    """
-    sTS = datetime.datetime.now().strftime(sTimeFmt)
-
-    if not pools: 
-        pools = getPools()
-
-    lCSV = []
-    lCSV.append('#timestamp;pool;cntVolumes;cntVolumesFree;cntVolumesExpired') # header
-
-    for p in sorted(pools.iterkeys()):
-        lCSV.append("%s;%s;%s;%s;%s" % (sTS,p,pools[p]['cntVol'],pools[p]['cntVolFree'], pools[p]['cntVolExpired']))
-
-    return "\n".join(lCSV)
-
-def showPoolsHTML(bolIgnoreEmptyPools = True, sTimeFmt="%Y-%m-%d %H:%M:%S"):
-    """
-    """
-
-    sTS = datetime.datetime.now().strftime(sTimeFmt)
-    r = getPools()
-
-    print '<table>'
-
-    for p in sorted(r.iterkeys()):
-        print '<tr>'
-        print '<td> %s </td>' % p
-        for v in sorted(r[p].iterkeys()):
-            print '<td> %s </td> <!-- %s --> ' % (r[p][v], v) 
-        print '</tr>'
-
-    print '</table>'
-
-
-def getPoolVolWritten(pool="POOL1",ts_begin = None, ts_end = None):
-    """
-    infos about the amount of data written to a pool in a given timeslot ("backup-window")
+    infos about the amount of data written to a pool in a given timeslot
+    ("backup-window")
     
-    returns:
+    returns
         list,int
  
             list of volumes written to, total amount of data written in bytes 
@@ -321,7 +239,7 @@ def getPoolVolWritten(pool="POOL1",ts_begin = None, ts_end = None):
     tfmt = "%m/%d/%Y %H:%M"
 
     query = string.Template("$MMINFO -s $SERVER -q 'pool=$POOL,savetime >= $TS_BEGIN, savetime <= $TS_END' -r 'volume,sumsize(40)' -xc,")  
-    cmd = query.substitute({'MMINFO' : BIN_MMINFO, 'SERVER' : NSR_SERVER, 'POOL':pool, 'TS_BEGIN' : ts_begin.strftime(tfmt), 'TS_END' : ts_end.strftime(tfmt)})
+    cmd = query.substitute({'MMINFO' : settings.BIN_MMINFO, 'SERVER' : nsr_server, 'POOL':pool, 'TS_BEGIN' : ts_begin.strftime(tfmt), 'TS_END' : ts_end.strftime(tfmt)})
 
     logger.info("exec cmd: %s" % cmd)
     rc,output = _execCmd(cmd)
@@ -352,6 +270,15 @@ def getPoolVolWritten(pool="POOL1",ts_begin = None, ts_end = None):
 
     return vols,sumsizeB
 
+# ---
+
+def get_clients_json(nsr_server=settings.NSR_SERVER):
+    """
+    """
+    res = get_clients()
+    # ...
+    raise Exception, "TODO"
+
 
 if __name__ == "__main__":
     if not len(sys.argv) > 1:
@@ -359,23 +286,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if sys.argv[1] == "selfcheck":
-        #logger.info("# getClientsCSV()")
-        #print getClientsCSV()
-        #logger.info("# getPoolsCSV()")
-        #print getPoolsCSV()
-        #logger.info("# getPoolsHTML()")
-        #showPoolsHTML()
-        logger.info("# getPoolVolWritten()")
-        pools = getPools()
-        print getPoolsCSV(pools)
-        for pool in pools:
-            vols, sumsizeB = getPoolVolWritten(pool)
-            if not (vols == None or sumsizeB == None):
-                print pool,len(vols), sumsizeB / 1024.0**3, "GiB"
-            else:
-                print "%s : no getPoolVolWritten() available. could be ok." % pool
-
-
-    elif sys.argv[1] == "pools_csv":
-        print getPoolsCSV()
+        logger.critical("TODO...")
 
