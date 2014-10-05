@@ -1,28 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-TODO
 """
 
 import nsrslib as nsrs
 import nsrslib.settings as settings
 
 print settings.NSR_SERVER
-NSR_SERVER = settings.NSR_SERVER
-print NSR_SERVER 
 
 print nsrs.get_version()
 
-nsrs.bla() # using pre-defined settings
+# query for nsr-server defined in settings.NSR_SERVER
 
-# dyn. overwrite settings 
-# without changing func-signature (no param)?
-# kwargs?
+print nsrs.get_clients() 
 
-nsrs.init_settings(NSR_SERVER="zaphod")
-nsrs.bla()
-print settings.NSR_SERVER
-print NSR_SERVER 
+# query for any other nsr-server
 
+print nsrs.get_clients(nsr_server="other-nsr-server.example.com")
 
-nsrs.get_clients()
