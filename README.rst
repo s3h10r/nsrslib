@@ -10,7 +10,18 @@ it could be used directly on a networker server or on any host where the
 networker client-software is installed.
 
 
-usage
+Installation
+------------
+
+Download, install, upgrade and uninstall nsrslib with these commands::
+
+  $ wget https://github.com/s3h10r/nsrslib/blob/develop/dist/nsrslib-0.0.9.tar.gz?raw=true
+  $ pip install nsrslib-0.0.9.tar.gz
+  $ pip install --upgrade nsrslib-0.0.9.tar.gz
+  $ pip uninstall nsrslib
+
+
+Usage
 -----
 
 .. code::
