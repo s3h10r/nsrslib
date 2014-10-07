@@ -1,5 +1,2 @@
-quickndirty refactoring & packaging of 
-nsrslib - simple networker scripting helpers
-
-[ ] get_clients_json
-
+[ ] testdata (nsradmin output): /testdata.{get_clients|get_pools}.nsradmin
+   [ ] tests :)
