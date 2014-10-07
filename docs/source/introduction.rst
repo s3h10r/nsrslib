@@ -1,8 +1,9 @@
 Overview
 ========
+:Description: nsrslib ("networker scripting library") provides some
+              tiny helpers for administrators of the enterprise backup
+              software `EMC Networker`_ 8.x
 
-nsrslib ("networker scripting library") provides some tiny helpers for
-administrators of the enterprise backup software `EMC Networker`_ 8.x.
 
 nsrslib tries to provide easy access to basic networker-config-information
 via python by wrapping networker-commands like `nsradmin` and `mminfo`.
@@ -22,6 +23,15 @@ Download, install, upgrade and uninstall nsrslib with these commands::
   $ pip install nsrslib-0.0.9.tar.gz
   $ pip install --upgrade nsrslib-0.0.9.tar.gz
   $ pip uninstall nsrslib
+
+
+.. _usage_example:
+
+Usage example
+-------------
+
+.. include:: usage-example.py
+   :code:
 
 
 .. _contributing:
