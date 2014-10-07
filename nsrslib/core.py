@@ -4,14 +4,10 @@
 nsr script library core functions
 
 some simple funcs for doing nsradmin stuff via python
-by wrapping calls to the nsradmin / mminfo command. 
+by wrapping calls to the `nsradmin` / `mminfo` command. 
 
 could be used on a networker server or on any host where the
 networker client-software is installed.
-
-to check if basic commands are working on your machine try:
-
-    ./core.py selfcheck
 
 USE AT YOUR OWN RISK! NO WARRENTY! FOR NOTHING!
 
@@ -241,7 +237,4 @@ if __name__ == "__main__":
     if not len(sys.argv) > 1:
         print __doc__
         sys.exit(1)
-
-    if sys.argv[1] == "selfcheck":
-        logger.critical("TODO...")
 
