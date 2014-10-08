@@ -25,6 +25,21 @@ Download, install, upgrade and uninstall nsrslib with these commands::
   $ pip uninstall nsrslib
 
 
+.. _configuration:
+
+Configuration
+-------------
+
+You can define a default networker-server to use for queries,
+change the paths to the networker-client-binaries etc.
+by editing nsrslib's config-file `settings.py`::
+
+  $ vi nsrslib/settings.py
+
+.. include:: ../../nsrslib/settings.py
+   :code:
+
+
 .. _usage_example:
 
 Usage example
