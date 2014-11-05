@@ -7,10 +7,14 @@
 #
 #   from nsrslib import get_clients
 
-__version__="0.0.9"
+__version__="0.0.92"
 
 from core import get_clients
+from core import get_manualsaves
+
 from core import get_clients_json
+from core import get_manualsaves_json
+
 
 def get_version():
     return __version__

@@ -1,5 +1,6 @@
 *pyc
 *swp
 *log
+workspace.py
 build/
 MANIFEST

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 """
-nsr script library core functions
+nsr scripting library core functions
 
 some simple funcs for doing nsradmin stuff via python
 by wrapping calls to the `nsradmin` / `mminfo` command. 
@@ -11,7 +11,7 @@ networker client-software is installed.
 
 USE AT YOUR OWN RISK! NO WARRENTY! FOR NOTHING!
 
-Copyright (C) 2009-11 Sven Hessenmüller <sven.hessenmueller@gmail.com>
+Copyright (C) 2009-2014 Sven Hessenmüller <sven.hessenmueller@gmail.com>
 """
 
 import datetime
@@ -34,16 +34,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 __author__="sven.hessenmueller@gmail.com"
-__version__="0.0.84-refactoring"
-__date__= "20110204"
-__copyright__ = "Copyright (c) 2009-11 %s" % __author__
-__license__ = "GPL"
+__version__="0.0.92-refactoring"
+__copyright__ = "Copyright (c) 2009-2014 %s" % __author__
+__license__ = "GPLv3+"
 
 
 ### --- some nsr-independent helpers
 # using _-prefix for not showing in pydoc
 
-def _execCmd(sCmd,env={}): 
+def _exec_cmd(sCmd,env={}): 
     """
     executes a given Command
 
@@ -66,6 +65,8 @@ def _execCmd(sCmd,env={}):
 
 ### --- END helpers
 
+
+# === nsradmin based funcs
 
 def do_nsradmin(cmd=None, nsr_server=settings.NSR_SERVER):
     """
@@ -90,7 +91,7 @@ def do_nsradmin(cmd=None, nsr_server=settings.NSR_SERVER):
         raise Exception, "exec of cmd for nsradmin failed! rc %d" % rc
     return res
 
-    
+
 def get_clients(nsr_server=settings.NSR_SERVER):
     """
     returns
@@ -199,7 +200,7 @@ def get_clients(nsr_server=settings.NSR_SERVER):
     return clients_clean
 
 
-# === TODOs, marked as private so the dunnot appear in pydoc 
+# --- TODOs, marked as private so the dunnot appear in pydoc 
 
 def _get_pools(ignore_empty_pools = True, nsr_server=settings.NSR_SERVER):
     """
@@ -219,8 +220,109 @@ def _get_nsr_config(nsr_server=settings.NSR_SERVER):
     """
     raise Exception, "TODO..."
 
-# === END TODOs
+# --- END TODOs
 
+
+# === mminfo based funcs
+
+def do_mminfo_csv(queryspec=None, reportspec=None, nsr_server=settings.NSR_SERVER):
+    """
+    sends query to mminfo
+
+    returns
+
+        header_csv (list), data_csv (list)
+    """
+
+    """
+    btw.
+
+    ??? #fun-fact #nsr: mminfo naming-keys seems mismatching reportspec-keys (sometimes). great. :-(
+        => reportspec-keys != csv-header-keys?
+
+        example:
+
+        reportspec='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53)'
+        csv_head=['date-time', 'savetime', ...]
+
+        => #TODOP3: include a test to validate the "mapping" is as expected, log warning if not matching
+                    (=> compare csv_head vals against reportspec.split(','))
+
+    """
+
+
+    exportspec="c';'" # use csv-delimiter ';'
+
+    if reportspec:
+        templ_cmd = string.Template("$MMINFO -s $SERVER -q '$QUERYSPEC' -r '$REPORTSPEC' -x $EXPORTSPEC")
+        ncmd = templ_cmd.substitute({'MMINFO': settings.BIN_MMINFO, 'SERVER' : nsr_server, 'QUERYSPEC' : queryspec, 'REPORTSPEC' : reportspec, 'EXPORTSPEC' : exportspec}) 
+    else:
+        templ_cmd = string.Template("$MMINFO -s $SERVER -q '$QUERYSPEC' -x $EXPORTSPEC")
+        ncmd = templ_cmd.substitute({'MMINFO': settings.BIN_MMINFO, 'SERVER' : nsr_server, 'QUERYSPEC' : queryspec, 'EXPORTSPEC' : exportspec})
+
+    logger.debug(ncmd)
+    if not queryspec:
+        raise Exception, "no queryspec defined" # TODO: usefull default query would be better
+
+    rc, res = _exec_cmd(ncmd)
+
+    csv_header = []
+    csv_data = []
+    for i,l in enumerate(res):
+        if i == 0:
+            csv_header = l.strip().split(';')
+            continue
+        csv_data.append(l.strip().split(';'))
+
+    return csv_header, csv_data
+
+    
+def get_manualsaves(ts_start=None, ts_stop=None,nsr_server=settings.NSR_SERVER):
+    """
+    returns
+
+        list of manual saves matching the given timewindow as dict
+
+        [
+ 
+            { 'client'    : <client-name>,
+              'savetime' :  <nsavetime>, # unix_epoch_time, see `man mminfo`
+              'level'     : 'manual',
+              'name'      : <saveset>,
+              ...
+            },
+
+            ...
+        ]
+    """
+
+    REPORTSPEC='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53)'
+
+    queryspec='level=manual' 
+    if ts_start and ts_stop: # specific timewindow (strongly recommended!) # eg "11/03/2014 00:00:00", "11/04/2014 23:59:59"
+        queryspec='level=manual,savetime>=%s,savetime<=%s' % (ts_start,ts_stop) 
+    logger.info("get_manualsaves uses queryspec: '%s'" % queryspec)
+    
+    csv_h, csv_data = do_mminfo_csv(queryspec=queryspec, reportspec=REPORTSPEC, nsr_server=nsr_server)
+
+    res = []
+    record = {}
+
+    def init_record():
+        record = {}
+        for h in csv_h:
+            record[h] = None
+
+    init_record()
+    for i,l in enumerate(csv_data):
+        for pos,h in enumerate(csv_h):
+            record[h] = l[pos]
+        res.append(record)
+        init_record()
+
+    return res
+
+# ===
 
 # --- other output formats etc.
 
@@ -230,6 +332,13 @@ def get_clients_json(nsr_server=settings.NSR_SERVER):
     import json
 
     res = get_clients(nsr_server=nsr_server)
+    return json.dumps(res,indent=4)
+
+def get_manualsaves_json(ts_start=None, ts_stop=None,nsr_server=settings.NSR_SERVER):
+    """
+    """
+    import json
+    res = get_manualsaves(ts_start, ts_stop,nsr_server=nsr_server)
     return json.dumps(res,indent=4)
 
 
