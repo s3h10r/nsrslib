@@ -54,7 +54,7 @@ epoch_time = time.time()
 epoch_time_as_dt = dt.datetime.fromtimestamp(epoch_time)
 print epoch_time, "==", epoch_time_as_dt
 
-res = nsrs.core.get_manualsaves_json(ts_start=ts_start,ts_stop=ts_stop)
+res = nsrs.get_manualsaves_json(ts_start=ts_start,ts_stop=ts_stop)
 
 import json
 res = json.loads(res)

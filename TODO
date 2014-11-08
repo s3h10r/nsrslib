@@ -1,2 +1,13 @@
+
+P1 [ ] #FIXME mminfo query results with csv_header inconsistency (mminfo <-> reportspec)
+       csv_header = reportspec.split(',')
+       logger.info("mminfo_csv_header: %s")
+       logger.info("our csv_header: %s")
+       if mminfo_csv_header != csv_header: ... #funny...
+
+[ ] manual save query - add group (reportspec)
+
 [ ] testdata (nsradmin output): /testdata.{get_clients|get_pools}.nsradmin
    [ ] tests :)
+
+
