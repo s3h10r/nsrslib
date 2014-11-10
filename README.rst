@@ -62,7 +62,7 @@ Usage
 
 for more try::
 
-    cd nsrslib && pydoc ./core.py
+    pydoc nsrslib.core
 
 
 Contributing

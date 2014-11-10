@@ -1,0 +1,7 @@
+0.0.94
+------
+
+- fixes: #MAJORBUG get_manualsaves
+- fixes: mminfo query results with csv_header inconsistency
+  (mminfo <-> reportspec)
+- manual save query - adds group (reportspec)

@@ -7,7 +7,7 @@
 #
 #   from nsrslib import get_clients
 
-__version__="0.0.92"
+__version__="0.0.94"
 
 from core import get_clients
 from core import get_manualsaves

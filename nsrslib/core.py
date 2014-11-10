@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 __author__="sven.hessenmueller@gmail.com"
-__version__="0.0.92-refactoring"
+__version__="0.0.94-refactoring"
 __copyright__ = "Copyright (c) 2009-2014 %s" % __author__
 __license__ = "GPLv3+"
 
@@ -234,23 +234,6 @@ def do_mminfo_csv(queryspec=None, reportspec=None, nsr_server=settings.NSR_SERVE
         header_csv (list), data_csv (list)
     """
 
-    """
-    btw.
-
-    ??? #fun-fact #nsr: mminfo naming-keys seems mismatching reportspec-keys (sometimes). great. :-(
-        => reportspec-keys != csv-header-keys?
-
-        example:
-
-        reportspec='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53)'
-        csv_head=['date-time', 'savetime', ...]
-
-        => #TODOP3: include a test to validate the "mapping" is as expected, log warning if not matching
-                    (=> compare csv_head vals against reportspec.split(','))
-
-    """
-
-
     exportspec="c';'" # use csv-delimiter ';'
 
     if reportspec:
@@ -262,18 +245,31 @@ def do_mminfo_csv(queryspec=None, reportspec=None, nsr_server=settings.NSR_SERVE
 
     logger.debug(ncmd)
     if not queryspec:
-        raise Exception, "no queryspec defined" # TODO: usefull default query would be better
+        raise Exception, "no queryspec defined" # TODOP3: maybe an usefull default query makes sense?
 
     rc, res = _exec_cmd(ncmd)
 
-    csv_header = []
+    csv_header_mminfo = []
     csv_data = []
     for i,l in enumerate(res):
         if i == 0:
-            csv_header = l.strip().split(';')
+            csv_header_mminfo = l.strip().split(';')
             continue
         csv_data.append(l.strip().split(';'))
 
+    #funfact
+    # sometimes reportspec-keys differs from the csv_header mminfo returns :-(
+    # example:
+    #    reportspec='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53)'
+    #    csv_head=['date-time', 'savetime', ...]
+    # therefore we use the reportspec-keys to build our own csv_header
+    # to present a "consistent naming" 
+    csv_header = [ el.split('(')[0] for el in reportspec.split(',') ] # 'ssid(53)' => 'ssid', ...
+    logger.info("csv_header (mminfo): %s " % csv_header_mminfo)
+    logger.info("csv_header: %s " % csv_header)
+    if cmp(csv_header_mminfo,csv_header) != 0:
+        logger.info("csv_header != csv_header_mminfo. this should be ok...")
+    
     return csv_header, csv_data
 
     
@@ -296,7 +292,7 @@ def get_manualsaves(ts_start=None, ts_stop=None,nsr_server=settings.NSR_SERVER):
         ]
     """
 
-    REPORTSPEC='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53)'
+    REPORTSPEC='savetime,nsavetime,client,name,level,volume,ssbrowse,ssretent,sumsize,ssid(53),group'
 
     queryspec='level=manual' 
     if ts_start and ts_stop: # specific timewindow (strongly recommended!) # eg "11/03/2014 00:00:00", "11/04/2014 23:59:59"
@@ -306,19 +302,18 @@ def get_manualsaves(ts_start=None, ts_stop=None,nsr_server=settings.NSR_SERVER):
     csv_h, csv_data = do_mminfo_csv(queryspec=queryspec, reportspec=REPORTSPEC, nsr_server=nsr_server)
 
     res = []
-    record = {}
 
-    def init_record():
+    def new_record():
         record = {}
         for h in csv_h:
             record[h] = None
+        return record
 
-    init_record()
     for i,l in enumerate(csv_data):
+        record = new_record()
         for pos,h in enumerate(csv_h):
             record[h] = l[pos]
         res.append(record)
-        init_record()
 
     return res
 
@@ -338,7 +333,7 @@ def get_manualsaves_json(ts_start=None, ts_stop=None,nsr_server=settings.NSR_SER
     """
     """
     import json
-    res = get_manualsaves(ts_start, ts_stop,nsr_server=nsr_server)
+    res = get_manualsaves(ts_start=ts_start, ts_stop=ts_stop, nsr_server=nsr_server)
     return json.dumps(res,indent=4)
 
 
